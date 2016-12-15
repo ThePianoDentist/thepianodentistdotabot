@@ -2,7 +2,7 @@
 ----------------------------------------------------------------------------------------------------
 
 _G._savedEnv = getfenv()
-module( "mode_generic_defend_ally", package.seeall )
+module( "mode_generic_laning", package.seeall )
 
 ----------------------------------------------------------------------------------------------------
 
@@ -18,43 +18,56 @@ module( "mode_generic_defend_ally", package.seeall )
 --
 ------------------------------------------------------------------------------------------------------
 --
---function Think()
---	--print( "mode_generic_defend_ally.Think" );
---end
---
+
+require( GetScriptDirectory().."/utility_funcs" )
+function Think()
+	local bot = GetBot();
+    local name = bot:GetUnitName()
+
+    if GetGameState() == 5  -- 5 is creeps spawned i.e 0 seconds
+    then
+        local seconds = getSeconds(DotaTime());
+--        for k,v in bot:GetNearbyCreeps() do -- why does this require 2 non self arguments?
+--            print(k, v)
+--        end
+        for k,v in pairs(bot) do -- why does this require 2 non self arguments?
+            print(k)
+            print ("space")
+            print (tostring(v))
+
+        end
+        local lane_spot = Vector(3747, -6344 , 0);
+        local camp_spot = Vector(3000, -4700, 0); -- Can I be using GetNeutralSpawners for getting camp location?
+        if (bot:GetHealth() == bot:GetMaxHealth())  -- If we havent yet tried to pull (probably a better way to check if aggro'd)
+        then
+            if (seconds > 35)  -- obviously this doesnt work for the other pull timing
+            then
+                bot:Action_AttackMove(camp_spot); -- now is a good time to try and pull
+            else
+                bot:Action_MoveToLocation(lane_spot); -- now is too early. stand in waiting spot
+            end
+        else -- we've 'initiated' the pull
+            -- when we aggro camp and when we arrive back in lane we have vel_y = 0 so need check location as well
+            -- or find way to query state from previous frame
+            -- or jsut use GetFacing!!!
+            if (bot:GetVelocity().y <= 0 and bot:GetLocation().y > -6000) -- we have pulled and are dragging creeps into lane
+            then
+                bot:Action_MoveToLocation(lane_spot);
+            else
+                bot:Action_AttackMove(camp_spot); -- go to farm the creeps we've pulled
+                -- I say farm. I meant shake it all about.
+                -- Setting attack move when already in one cancels animation and starts again
+                -- I believe/hope replacing with AttackUnit will not do the cancelling
+            end
+        end
+    end
+
+
+
+end
+
 ------------------------------------------------------------------------------------------------------
 --
---function GetDesire()
---
---	local npcBot = GetBot();
---
---	local fBestDefendScore = 0;
---	local npcBestDefendableAlly = nil;
---	local npcBestAttackingEnemy = nil;
---
---	local tableNearbyRetreatingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_RETREAT );
---	if ( #tableNearbyRetreatingAlliedHeroes == 0 )
---	then
---		return BOT_MODE_DESIRE_NONE;
---	end
---
---	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
---
---	-- Is there a good enemy to attack, who's scary to our ally and not too scary to us?
---	for _,npcAlly in pairs( tableNearbyRetreatingAlliedHeroes )
---	do
---		local fDefendScore, npcEnemy = GetDefendScore( npcAlly, tableNearbyEnemyHeroes );
---
---		if ( fDefendScore > fBestDefendScore )
---		then
---			fBestDefendScore = fDefendScore;
---			npcBestDefendableAlly = npcAlly;
---			npcBestAttackingEnemy = npcEnemy;
---		end
---	end
---
---	return RemapValClamped( fBestDefendScore, 0.0, 1.0, BOT_MODE_DESIRE_NONE, BOT_MODE_DESIRE_HIGH );
---end
 --
 ------------------------------------------------------------------------------------------------------
 --
@@ -93,6 +106,6 @@ module( "mode_generic_defend_ally", package.seeall )
 
 ----------------------------------------------------------------------------------------------------
 
-for k,v in pairs( mode_generic_defend_ally ) do	_G._savedEnv[k] = v end
+for k,v in pairs( mode_generic_laning ) do	_G._savedEnv[k] = v end
 
 ----------------------------------------------------------------------------------------------------
