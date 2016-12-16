@@ -22,22 +22,24 @@ module( "mode_generic_laning", package.seeall )
 require( GetScriptDirectory().."/utility_funcs" )
 function Think()
 	local bot = GetBot();
-    local name = bot:GetUnitName()
-
+    local name = bot:GetUnitName();
+    local a = GetTeamMember(2, 1);
+    print (GetTeamMember(2, 1):GetLocation());
     if GetGameState() == 5  -- 5 is creeps spawned i.e 0 seconds
     then
-        local seconds = getSeconds(DotaTime());
---        for k,v in bot:GetNearbyCreeps() do -- why does this require 2 non self arguments?
---            print(k, v)
---        end
-        for k,v in pairs(bot) do -- why does this require 2 non self arguments?
-            print(k)
-            print ("space")
-            print (tostring(v))
+        --print (bot:GetLocation());
+        local seconds = get_seconds(DotaTime());
+        for k,v in pairs(bot:GetNearbyCreeps(600, true)) do -- why does this require 2 non self arguments?
+            print(k, v)
+            for k2, v2 in pairs(v) do
+                print (k2, v2)
+            end
 
         end
+
+
         local lane_spot = Vector(3747, -6344 , 0);
-        local camp_spot = Vector(3000, -4700, 0); -- Can I be using GetNeutralSpawners for getting camp location?
+        local camp_spot = Vector(3000, -4700, 0); -- Can I be using GetNeutralSpawners for getting camp location? GetNeutralSpwaners just returns empty table
         if (bot:GetHealth() == bot:GetMaxHealth())  -- If we havent yet tried to pull (probably a better way to check if aggro'd)
         then
             if (seconds > 35)  -- obviously this doesnt work for the other pull timing
