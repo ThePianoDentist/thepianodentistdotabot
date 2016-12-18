@@ -1,6 +1,7 @@
 
 
-local tableItemsToBuy = { 
+local tableItemsToBuy = {
+	"item_boots",
 				"item_tango",
 				"item_tango",
 				"item_clarity",
