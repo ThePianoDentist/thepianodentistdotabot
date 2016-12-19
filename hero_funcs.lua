@@ -1,15 +1,13 @@
 
 require( GetScriptDirectory().."/locations" )
-function CDOTA_Bot_Script:pull_easy_radiant(seconds)
+function CDOTA_Bot_Script:pull_easy_radiant()
+    -- if it switches decison midway through pull this can cause crashes I think. due to not unassigning current_target and/or camp_is_there
     local lane_spot = Vector(3747, -6344 , 0);
-    print ("radiant_easy_camp_is_there = false")
-    print (radiant_easy_camp_is_there)
-    print ("-------------")
     -- someone damaging the camp without pulling might break this?
     if (current_target == nil or (current_target ~= nil and (current_target:GetVelocity().x == 0 and current_target:GetVelocity().y == 0
         and current_target:GetHealth() == current_target:GetMaxHealth() and next(self:GetNearbyCreeps(500, false)) == nil))
     ) then
-        if (seconds > 53 - self:estimate_travel_time(RAD_SAFE_EASY)) then  -- obviously this doesnt work for the other pull timing
+        if (_G.seconds > 53 - self:estimate_travel_time(RAD_SAFE_EASY)) then  -- obviously this doesnt work for the other pull timing
             if current_target ~= nil then
                 if current_target:GetHealth() == -1 then -- we just got fogged....motherfucker
                     print ("Got fogged: self:Action_AttackMove(RAD_SAFE_EASY)")
@@ -46,7 +44,7 @@ function CDOTA_Bot_Script:pull_easy_radiant(seconds)
                 local neuts = self:GetNearbyCreeps(1000, true)
                 for k, v in pairs(neuts) do
                     if v:GetHealth() > 0 or v:GetHealth() == -1 then
-                        current_target = v -- if this fails theyre all dead go back to lane?
+                        current_target = v
                     end
                 end
             end
@@ -54,7 +52,7 @@ function CDOTA_Bot_Script:pull_easy_radiant(seconds)
             if current_target ~= nil then
                 print ("self:Action_AttackUnit(current_target, true)")
                 self:Action_AttackUnit(current_target, true)
-            else
+            else -- camp is dead. go do some other stuff
                 _G.radiant_easy_camp_is_there = false
             end
         end
