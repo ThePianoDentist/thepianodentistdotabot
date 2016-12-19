@@ -24,17 +24,25 @@ require( GetScriptDirectory().."/utility_funcs" )
 require( GetScriptDirectory().."/locations" )
 require( GetScriptDirectory().."/hero_funcs" )
 current_target = nil
+movespeed = nil
+radiant_easy_camp_is_there = true
 function Think()
 	local bot = GetBot();
     local name = bot:GetUnitName();
 
-
     --print (GetTeamMember(2, 1):GetLocation());
-    if GetGameState() == 5  -- 5 is creeps spawned i.e 0 seconds
-    then
-        --print (bot:GetLocation());
+    if GetGameState() == 4 and movespeed ~= nil then
+        movespeed = bot:calibrate_move_speed()
+    elseif GetGameState() == 5 then  -- 5 is creeps spawned i.e 0 seconds
         seconds = get_seconds(DotaTime());
-        bot:pull_easy_radiant(seconds);
+        if seconds == 0 and math.floor(DotaTime()) % 120 == 60 then  --function this
+            radiant_easy_camp_is_there = true
+        end
+        --print (bot:GetLocation());
+    print (radiant_easy_camp_is_there)
+        if radiant_easy_camp_is_there == true then
+            bot:pull_easy_radiant(seconds);
+        end
     end
     last_health = bot:GetHealth();
 
