@@ -13,6 +13,7 @@ module( "mode_generic_laning", package.seeall )
 
 function OnEnd()
     _G.current_target = nil
+    _G.creeps_aggroed = nil
 	--print( "mode_generic_defend_ally.OnEnd" );
 end
 
