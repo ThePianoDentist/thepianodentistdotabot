@@ -10,14 +10,11 @@ module( "mode_generic_laning", package.seeall )
 --	--print( "mode_generic_defend_ally.OnStart" );
 --end
 --
-------------------------------------------------------------------------------------------------------
---
---function OnEnd()
---	--print( "mode_generic_defend_ally.OnEnd" );
---end
---
-------------------------------------------------------------------------------------------------------
---
+
+function OnEnd()
+    _G.current_target = nil
+	--print( "mode_generic_defend_ally.OnEnd" );
+end
 
 
 require( GetScriptDirectory().."/utility_funcs" )
@@ -25,20 +22,22 @@ require( GetScriptDirectory().."/locations" )
 require( GetScriptDirectory().."/hero_funcs" )
 _G.radiant_easy_camp_is_there = true
 function Think()
-	local bot = GetBot();
-    local name = bot:GetUnitName();
+	local bot = GetBot()
+    local name = bot:GetUnitName()
 
     --print (GetTeamMember(2, 1):GetLocation());
-    if GetGameState() == 4 and movespeed ~= nil then
-        movespeed = bot:calibrate_move_speed()
-    elseif GetGameState() == 5 then  -- 5 is creeps spawned i.e 0 seconds
+    if GetGameState() == 5 then  -- 5 is creeps spawned i.e 0 seconds
         _G.seconds = get_seconds(DotaTime());
         if seconds == 0 and math.floor(DotaTime()) % 120 == 60 then  --function this
             _G.radiant_easy_camp_is_there = true
         end
         if _G.radiant_easy_camp_is_there == true then
-            bot:pull_easy_radiant();
+            local lane_spot = Vector(3747, -6344 , 0);
+            bot:pull_camp(RAD_SAFE_EASY, lane_spot, lane_spot, 43, true);
         end
+
+    elseif GetGameState() == 4 and _G.movespeed == nil then
+        _G.movespeed = bot:calibrate_move_speed()
     end
     --last_health = bot:GetHealth();
 
