@@ -66,21 +66,24 @@ require( GetScriptDirectory().."/locations" )
 
 function CDOTA_Bot_Script:pull_camp(camp, pull_to, pull_from, timing, should_double_pull)
     if _G.current_target ~= nil then
-    print(_G.current_target:GetHealth())
+        print(_G.current_target:GetHealth())
     end
+    print ("chain_pull ~= nil: " .. tostring(chain_pull ~= nil))
     if chain_pull ~= nil and should_double_pull == true then
         return self:pull_camp(RAD_SAFE_HARD, RAD_SAFE_EASY, RAD_SAFE_HARD, 59, false);
     end
 
     -- if it switches decison midway through pull this can cause crashes I think. due to not unassigning _G.current_target and/or camp_is_there
     -- someone damaging the camp without pulling might break this?
+
+    -- even after aggoring, if theyre fogged it reports velocity as 0 and max health as -1. Nice! :D
     if (_G.current_target == nil or (_G.current_target ~= nil and (_G.current_target:GetVelocity().x == 0 and _G.current_target:GetVelocity().y == 0
-            and _G.current_target:GetHealth() == _G.current_target:GetMaxHealth() and next(self:GetNearbyCreeps(400, false)) == nil))
+            and _G.current_target:GetHealth() == _G.current_target:GetMaxHealth() and next(self:GetNearbyCreeps(300, false)) == nil))
     ) then
         -- The only time our 'action' goes over the minute, is in a chain pull. if we've told it to chain pull, then dont need to check time
         if (_G.seconds > timing - self:estimate_travel_time(camp) or chain_pull ~= nil) then
             if _G.current_target ~= nil then
-                if _G.current_target:GetHealth() == -1 then -- we just got fogged....motherfucker
+                if _G.current_target:GetHealth() == -1 and _G.creeps_aggroed == nil then -- we just got fogged....motherfucker
                 print ("Got fogged: self:Action_MoveToLocation(camp)")
                 print ("_G.current_target:GetMaxHealth()" .. tostring(_G.current_target:GetMaxHealth()))
                 print ("_G.current_target:GetVelocity().y" .. tostring(_G.current_target:GetVelocity().y))
@@ -113,17 +116,23 @@ function CDOTA_Bot_Script:pull_camp(camp, pull_to, pull_from, timing, should_dou
             self:Action_MoveToLocation(pull_to) -- now is too early. stand in waiting spot
         end
     else -- we've 'initiated' the pull
+        _G.creeps_aggroed = true
         -- gonna be a bug where creep gone back
 
         -- do the double pull
-        if _G.seconds == 58  and should_double_pull then
+        if _G.seconds == 58  and should_double_pull  and _G.radiant_easy_camp_is_there then
             print ("Doing chain pull")
             chain_pull = true
-            _G.current_target = nil
+            _G.current_target = nil -- maybe I should just call the OnEnd function?
+            _G.creeps_aggroed = nil
             return
         end
-
-        if (_G.current_target:GetVelocity().y <= 0 and next(self:GetNearbyCreeps(500, false)) == nil) then -- we have pulled and are dragging creeps into lane
+        --if (_G.current_target:GetVelocity().y <= 0 and next(self:GetNearbyCreeps(200, false)) == nil) then
+        local friendly_creep_rad_check = 500
+        if chain_pull then friendly_creep_rad_check = 300 -- because we want to pull creeps all way over to other camp. dont stop halfway
+        end
+        print ("next(self:GetNearbyCreeps(friendly_creep_rad_check, false)): " .. tostring(next(self:GetNearbyCreeps(friendly_creep_rad_check, false))))
+        if (next(self:GetNearbyCreeps(friendly_creep_rad_check, false)) == nil) then -- we have pulled and are dragging creeps into lane
             print ("self:Action_MoveToLocation(pull_to)")
             self:Action_MoveToLocation(pull_to)
         else
@@ -145,6 +154,8 @@ function CDOTA_Bot_Script:pull_camp(camp, pull_to, pull_from, timing, should_dou
                 self:Action_AttackUnit(_G.current_target, true)
             else -- camp is dead. go do some other stuff
                 _G.radiant_easy_camp_is_there = false
+                chain_pull = nil
+                _G.creeps_aggroed = nil
             end
         end
     end
@@ -186,21 +197,48 @@ function CDOTA_Bot_Script:estimate_travel_time(location)
     return distance / _G.movespeed
 end
 
-function CDOTA_Bot_Script:stack_camp(camp, timing)
-    if _G.seconds < camp.stackt then
+function CDOTA_Bot_Script:stack_camp(camp)
+    if _G.seconds < camp.stack_t then
         if self:GetLocation() ~= camp.pull_from then
             self:Action_MoveToLocation(camp.location)
         end
-    end
-
-    if GetUnitToLocationDistance(self, camp) > 400 then
-        self:Action_MoveToLocation(camp)
     else
-        self:Action_MoveToLocation(camp)
+        if (_G.current_target == nil or (_G.current_target ~= nil and (_G.current_target:GetVelocity().x == 0 and _G.current_target:GetVelocity().y == 0
+                and _G.current_target:GetHealth() == _G.current_target:GetMaxHealth() and next(self:GetNearbyCreeps(400, false)) == nil))
+        ) then
+            local neuts = self:GetNearbyCreeps(1000, true)
+            if _G.current_target == nil then
+                for k, v in pairs(neuts) do
+                    if v:GetHealth() > 0 or v:GetHealth() == -1 then _G.current_target = v
+                    end
+                end
+            end
+            if _G.current_target ~= nil then self:Action_AttackUnit(_G.current_target)
+            else print "Current target still nil. no camp there?"
+            end
+        else
+            self:Action_MoveToLocation(camp.pull_to)
+        end
     end
-
     return
 end
+
+function CDOTA_Bot_Script:find_nearest_camp()
+    -- theres probably going to be a minimum distance where you know if you're under that. no other camps can be closer
+    -- oh my god. why is this game so complicated. if we use isAlive to filter out killed camps, how do we include ones that will respawn by time get there....
+    local min_distance = 9000
+    for k,v in pairs(camps) do
+        local distance = GetUnitToLocationDistance(self, v.location) -- is this the optimal algo. cant i do lgn? n is small though
+        if distance < min_distance then
+            local nearest_camp = v
+        end
+    end
+
+    return nearest_camp
+end
+
+--maybe camps should be a struct and define these functions on camps?
+--function camp
 
 function aggro_camp()
     return

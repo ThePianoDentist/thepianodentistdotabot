@@ -6,10 +6,13 @@ module( "mode_generic_laning", package.seeall )
 
 ----------------------------------------------------------------------------------------------------
 
---function OnStart()
---	--print( "mode_generic_defend_ally.OnStart" );
---end
---
+function OnStart()
+    chain_pull = nil
+    _G.current_target = nil
+    _G.creeps_aggroed = nil
+	--print( "mode_generic_defend_ally.OnStart" );
+end
+
 
 function OnEnd()
     _G.current_target = nil
