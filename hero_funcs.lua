@@ -1,4 +1,4 @@
-
+local next = next -- makes things quicker apparently :|
 require( GetScriptDirectory().."/locations" )
 --function CDOTA_Bot_Script:pull_easy_radiant(should_double_pull)
 --    -- if it switches decison midway through pull this can cause crashes I think. due to not unassigning _G.current_target and/or camp_is_there
@@ -120,7 +120,8 @@ function CDOTA_Bot_Script:pull_camp(camp, pull_to, pull_from, timing, should_dou
         -- gonna be a bug where creep gone back
 
         -- do the double pull
-        if _G.seconds == 58  and should_double_pull  and _G.radiant_easy_camp_is_there then
+        -- replace with time to pull and creep health to always work
+        if _G.seconds == 57  and should_double_pull  and _G.radiant_easy_camp_is_there then
             print ("Doing chain pull")
             chain_pull = true
             _G.current_target = nil -- maybe I should just call the OnEnd function?
@@ -161,42 +162,6 @@ function CDOTA_Bot_Script:pull_camp(camp, pull_to, pull_from, timing, should_dou
     end
 end
 
-function CDOTA_Bot_Script:chain_pull_hard_radiant()
-    return true
-end
-
-function CDOTA_Bot_Script:calibrate_move_speed()
-    -- Im fairly sure axe can randomly bodyblock slightly at start, causing slightly lower than what should be
-    local dtime = DotaTime()
-    if dtime > - 87 then
-        self:Action_MoveToLocation(Vector(5000, -3000, 0)) -- make her go towards radiant jungle as otherwise misses first pull
-    end
-
-    if dtime > - 86 then
-        if t_start == nil then
-            t_start = dtime
-            l_start = self:GetLocation()
-            return nil  -- first time through we just log start time and position
-        else
-            t_end = dtime -- second time we can now compare and calculate a speed
-            local speed = GetUnitToLocationDistance(self, l_start) / (t_end - t_start)
-            print ("Speed calibrated")
-            print (speed)
-            return speed
-        end
-    else
-        return nil -- only want to do the calibration once
-    end
-end
-
-function CDOTA_Bot_Script:estimate_travel_time(location)
-    -- do I need to factor in turn rate as well?
-    local distance = GetUnitToLocationDistance(self, location) -- why does self: not work. but passing self in does?
-    --local move_speed = 300
-    print( distance / _G.movespeed)
-    return distance / _G.movespeed
-end
-
 function CDOTA_Bot_Script:stack_camp(camp)
     if _G.seconds < camp.stack_t then
         if self:GetLocation() ~= camp.pull_from then
@@ -223,23 +188,49 @@ function CDOTA_Bot_Script:stack_camp(camp)
     return
 end
 
+function CDOTA_Bot_Script:get_target()
+    if _G.current_target == nil then
+        local neuts = self:GetNearbyCreeps(1000, true)
+        for _, v in pairs(neuts) do
+            if v:GetHealth() > 0 or v:GetHealth() == -1 and GetUnitToLocationDistance(v, camp) < 200 then
+                _G.current_target = v
+                return v
+            end
+        end
+    end
+end
+
+function CDOTA_Bot_Script:aggro_camp()
+    local target = CDOTA_Bot_Script:get_target()
+
+    if target ~= nil and target:GetHealth() ~= -1 and _G.creeps_aggroed ~= nil
+    then
+        print ("self:Action_AttackUnit(_G.current_target, true);")
+        self:Action_AttackUnit(target, true)
+    else
+        print ("self:Action_MoveToLocation(pull_from)")
+        self:Action_MoveToLocation(camp)
+    end
+    return
+end
+
+--maybe camps should be a struct and define these functions on camps?
+--function camp
 function CDOTA_Bot_Script:find_nearest_camp()
     -- theres probably going to be a minimum distance where you know if you're under that. no other camps can be closer
     -- oh my god. why is this game so complicated. if we use isAlive to filter out killed camps, how do we include ones that will respawn by time get there....
     local min_distance = 9000
     for k,v in pairs(camps) do
         local distance = GetUnitToLocationDistance(self, v.location) -- is this the optimal algo. cant i do lgn? n is small though
+        local time_to_spawn = 60 - _G.seconds
+        if _G.minutes % 2 ~= 0 then time_to_spawn = time_to_spawn + 60
+        end
+        if v.isAlive or self:estimate_travel_time(v.location) < time_to_spawn then  -- creeps only spawn every other minute... :/
         if distance < min_distance then
             local nearest_camp = v
+        end
         end
     end
 
     return nearest_camp
-end
-
---maybe camps should be a struct and define these functions on camps?
---function camp
-
-function aggro_camp()
-    return
 end

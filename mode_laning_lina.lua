@@ -24,6 +24,7 @@ end
 require( GetScriptDirectory().."/utility_funcs" )
 require( GetScriptDirectory().."/locations" )
 require( GetScriptDirectory().."/hero_funcs" )
+require( GetScriptDirectory().."/movespeed" )
 _G.radiant_easy_camp_is_there = true
 function Think()
 	local bot = GetBot()
