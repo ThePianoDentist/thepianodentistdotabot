@@ -7,42 +7,53 @@ module( "mode_generic_laning", package.seeall )
 ----------------------------------------------------------------------------------------------------
 
 function OnStart()
+    local state = nil
     chain_pull = nil
     _G.current_target = nil
     _G.creeps_aggroed = nil
+    _G.state = "none"
+    _G.have_pulled = false
 	--print( "mode_generic_defend_ally.OnStart" );
 end
 
 
 function OnEnd()
+    _G.state = "none"
+    state = nil
     _G.current_target = nil
     _G.creeps_aggroed = nil
+    _G.have_pulled = false
 	--print( "mode_generic_defend_ally.OnEnd" );
 end
 
 
 require( GetScriptDirectory().."/utility_funcs" )
-require( GetScriptDirectory().."/locations" )
+require( GetScriptDirectory().."/locations2" )
 require( GetScriptDirectory().."/hero_funcs" )
-require( GetScriptDirectory().."/movespeed" )
-_G.radiant_easy_camp_is_there = true
+
 function Think()
 	local bot = GetBot()
     local name = bot:GetUnitName()
 
     --print (GetTeamMember(2, 1):GetLocation());
     if GetGameState() == 5 then  -- 5 is creeps spawned i.e 0 seconds
-        _G.seconds = get_seconds(DotaTime());
+        _G.seconds = get_seconds(DotaTime())
+        _G.minutes = math.floor(DotaTime() / 60)
         if seconds == 0 and math.floor(DotaTime()) % 120 == 60 then  --function this
-            _G.radiant_easy_camp_is_there = true
+            RAD_SAFE_EASY.is_alive = true
+            RAD_SAFE_HARD.is_alive = true
         end
-        if _G.radiant_easy_camp_is_there == true then
-            local lane_spot = Vector(3747, -6344 , 0);
-            bot:pull_camp(RAD_SAFE_EASY, lane_spot, lane_spot, 43, true);
+        if _G.state == "chain_pull_hard" and RAD_SAFE_HARD.is_alive then
+            print ("CHAING PULLING")
+            bot:pull_camp(RAD_SAFE_HARD, 59, false, 1);
+        elseif RAD_SAFE_EASY.is_alive == true then
+            _G.state = "pull_easy"
+            bot:pull_camp(RAD_SAFE_EASY, 44, true, 0);
         end
 
-    elseif GetGameState() == 4 and _G.movespeed == nil then
-        _G.movespeed = bot:calibrate_move_speed()
+--    elseif GetGameState() == 4 and _G.movespeed == nil then
+--        _G.movespeed = bot:calibrate_move_speed()
+--    end
     end
     --last_health = bot:GetHealth();
 
