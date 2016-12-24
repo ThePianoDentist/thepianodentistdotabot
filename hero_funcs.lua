@@ -15,19 +15,15 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num)
     ) then
         -- The only time our 'action' goes over the minute, is in a chain pull. if we've told it to chain pull, then dont need to check time
         if (_G.seconds > timing - self:estimate_travel_time(camp.location) or pull_num == 1) then
-            print ("self:aggro_camp(camp)")
             self:aggro_camp(camp)
         else
-            print ("self:Action_MoveToLocation(camp.pull_to)")
             self:Action_MoveToLocation(camp.pull_to) -- now is too early. stand in waiting spot
         end
     else -- we've 'initiated' the pull
         _G.creeps_aggroed = true
-        print ("Creeps aggroed")
 
         -- do the double pull
         -- replace with time to pull and creep health to always work
-        print (":time_to_chain_pull(camp): ", self:time_to_chain_pull(camp))
         if should_chain and self:time_to_chain_pull(camp) == true and camp.is_alive then
             print ("Doing chain pull")
             _G.have_pulled = false
@@ -39,11 +35,12 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num)
             return
         end
         --if (_G.current_target:GetVelocity().y <= 0 and next(self:GetNearbyCreeps(200, false)) == nil) then
-        if GetUnitToLocationDistance(self, camp.pull_to) < 200 then _G.have_pulled = true end
-        print ("have_pulled: " .. tostring(_G.have_pulled))
+        if GetUnitToLocationDistance(self, camp.pull_to) < 200 then
+            _G.have_pulled = true
+            print ("We have pulled creeps. now to farm xD")
+        end
         --if pull_num == 1 then friendly_creep_rad_check = 400 -- because we want to pull creeps all way over to other camp. dont stop halfway
         if _G.have_pulled ~= true then -- we have pulled and are dragging creeps into lane
-            print ("self:Action_MoveToLocation(camp.pull_to)")
             self:Action_MoveToLocation(camp.pull_to)
         else
             self:farm_camp(camp)
@@ -68,30 +65,25 @@ function CDOTA_Bot_Script:get_target(camp)
 end
 
 function CDOTA_Bot_Script:aggro_camp(camp)
-    print ("CDOTA_Bot_Script:aggro_camp(camp)")
-    if _G.current_target == nil then
-        print ("_G.current_target: " .. "nil")
-    else
-        print ("_G.current_target: " .. tostring(_G.current_target))
-    end
-
     if _G.current_target == nil then
          _G.current_target = self:get_target(camp)
     end
 
-    print ("Target: " .. tostring(_G.current_target))
-    if _G.current_target  ~= nil and _G.current_target:GetHealth() ~= -1
+    if _G.current_target  ~= nil and _G.current_target:IsAlive() == true
     then
-        print ("self:Action_AttackUnit(_G.current_target, true);")
         self:Action_AttackUnit(_G.current_target, true)
     else
-        print ("self:Action_MoveToLocation(camp.location)")
         self:Action_MoveToLocation(camp.location)
     end
     return
 end
 
 function CDOTA_Bot_Script:farm_camp(camp)
+    if self:GetNearbyCreeps(1000, false) and _G.current_target:GetHealth() < 220 then --either pull failed or all our creeps are dead
+        print ("No friendlies to tank. retreating")
+        _G.creeps_aggroed = nil
+        _G.have_pulled = false
+        _G.state = "none"
     print ("_G.current_target:IsAlive: " .. tostring(_G.current_target:IsAlive()))
     if _G.current_target:GetHealth() == 0 or _G.current_target:IsAlive() == false then -- check IsAlive
         print ("_G.current_target = self:get_target(camp)")
@@ -99,16 +91,14 @@ function CDOTA_Bot_Script:farm_camp(camp)
     end
 
     if _G.current_target ~= nil then
-        print ("self:Action_AttackUnit(_G.current_target, true)")
         self:Action_AttackUnit(_G.current_target, true)
     else -- camp is dead. go do some other stuff
         print ("camp dead")
         camp.is_alive = false
-        --chain_pull = nil
         _G.creeps_aggroed = nil
         _G.have_pulled = false
         _G.state = "none"
-    self:Action_MoveToLocation(RAD_SAFE_EASY.pull_to)
+        self:Action_MoveToLocation(RAD_SAFE_EASY.pull_to)
     end
 end
 
