@@ -29,7 +29,7 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num)
         if should_chain and self:time_to_chain_pull(camp) == true and camp.is_alive then
             print ("Doing chain pull")
             reset_pull_vars()
-            camp.is_alive = false -- this technically isnt true. need to recheck if camp alive at some point
+            camp.is_alive = false -- TODO this isnt being updated properly
             _G.state = "chain_pull_hard"
             return
         end
