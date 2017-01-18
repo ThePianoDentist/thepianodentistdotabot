@@ -1,6 +1,12 @@
 local next = next -- makes things quicker apparently :|
 require( GetScriptDirectory().."/locations2" )
 
+function reset_pull_vars()
+    _G.current_target = nil
+    _G.creeps_aggroed = nil
+    _G.have_pulled = false
+    return
+end
 
 function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num)
 --    if pull_num == 0 and chain_pull ~= nil then
@@ -10,9 +16,7 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num)
     -- someone damaging the camp without pulling might break this?
 
     -- even after aggroing, if theyre fogged it reports velocity as 0 and max health as -1. Nice! :D
-    if (_G.current_target == nil or (_G.current_target:GetVelocity().x == 0 and _G.current_target:GetVelocity().y == 0 and not _G.creeps_aggroed
-            and _G.current_target:GetHealth() == _G.current_target:GetMaxHealth() and next(self:GetNearbyCreeps(300, false)) == nil)
-    ) then
+    if not _G.creeps_aggroed then
         -- The only time our 'action' goes over the minute, is in a chain pull. if we've told it to chain pull, then dont need to check time
         if (_G.seconds > timing - self:estimate_travel_time(camp.location) or pull_num == 1) then
             self:aggro_camp(camp)
@@ -20,29 +24,21 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num)
             self:Action_MoveToLocation(camp.pull_to) -- now is too early. stand in waiting spot
         end
     else -- we've 'initiated' the pull
-        _G.creeps_aggroed = true
-
         -- do the double pull
         -- replace with time to pull and creep health to always work
         if should_chain and self:time_to_chain_pull(camp) == true and camp.is_alive then
             print ("Doing chain pull")
-            _G.have_pulled = false
+            reset_pull_vars()
             camp.is_alive = false -- this technically isnt true. need to recheck if camp alive at some point
-            --chain_pull = true
-            _G.current_target = nil -- maybe I should just call the OnEnd function?
-            _G.creeps_aggroed = nil
             _G.state = "chain_pull_hard"
             return
         end
-        --if (_G.current_target:GetVelocity().y <= 0 and next(self:GetNearbyCreeps(200, false)) == nil) then
-        if GetUnitToLocationDistance(self, camp.pull_to) < 200 then
-            _G.have_pulled = true
-            print ("We have pulled creeps. now to farm xD")
-        end
+
         --if pull_num == 1 then friendly_creep_rad_check = 400 -- because we want to pull creeps all way over to other camp. dont stop halfway
-        if _G.have_pulled ~= true then -- we have pulled and are dragging creeps into lane
-            self:Action_MoveToLocation(camp.pull_to)
+        if _G.have_pulled ~= true and GetUnitToLocationDistance(self, camp.pull_to) > 200 then -- we have pulled and are dragging creeps into lane
+                self:Action_MoveToLocation(camp.pull_to)
         else
+            _G.have_pulled = true
             self:farm_camp(camp)
         end
     end
@@ -72,6 +68,10 @@ function CDOTA_Bot_Script:aggro_camp(camp)
     if _G.current_target  ~= nil and _G.current_target:IsAlive() == true
     then
         self:Action_AttackUnit(_G.current_target, true)
+        if self:haveWeAggroedPull() then
+            _G.creeps_aggroed = true
+            print ("Have Aggored the creeps")
+        end
     else
         self:Action_MoveToLocation(camp.location)
     end
@@ -79,11 +79,12 @@ function CDOTA_Bot_Script:aggro_camp(camp)
 end
 
 function CDOTA_Bot_Script:farm_camp(camp)
-    if self:GetNearbyCreeps(1000, false) and _G.current_target:GetHealth() < 220 then --either pull failed or all our creeps are dead
+    if not self:GetNearbyCreeps(1000, false) and _G.current_target:GetHealth() < 220 then --either pull failed or all our creeps are dead
         print ("No friendlies to tank. retreating")
         _G.creeps_aggroed = nil
         _G.have_pulled = false
         _G.state = "none"
+    end
     print ("_G.current_target:IsAlive: " .. tostring(_G.current_target:IsAlive()))
     if _G.current_target:GetHealth() == 0 or _G.current_target:IsAlive() == false then -- check IsAlive
         print ("_G.current_target = self:get_target(camp)")
@@ -128,7 +129,7 @@ function CDOTA_Bot_Script:find_nearest_camp()
     -- oh my god. why is this game so complicated. if we use isAlive to filter out killed camps, how do we include ones that will respawn by time get there....
     local min_distance = 9000
     for k,v in pairs(camps) do
-        local distance = GetUnitToLocationDistance(self, v.location) -- is this the optimal algo. cant i do lgn? n is small though
+        local distance = GetUnitToLocationDistance(self, v.location) -- is this the optimal algo?
         local time_to_spawn = 60 - _G.seconds
         if _G.minutes % 2 ~= 0 then time_to_spawn = time_to_spawn + 60
         end
@@ -165,4 +166,9 @@ function CDOTA_Bot_Script:estimate_travel_time(location)
     --local move_speed = 300
     print( distance / self:GetCurrentMovementSpeed())
     return distance / self:GetCurrentMovementSpeed()
+end
+
+function CDOTA_Bot_Script:haveWeAggroedPull()
+    return not (_G.current_target:GetVelocity().x == 0 and _G.current_target:GetVelocity().y == 0 and not _G.creeps_aggroed
+            and _G.current_target:GetHealth() == _G.current_target:GetMaxHealth() and next(self:GetNearbyCreeps(300, false)) == nil)
 end

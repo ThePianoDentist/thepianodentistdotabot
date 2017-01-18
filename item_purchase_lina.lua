@@ -30,17 +30,22 @@ local tableItemsToBuy = {
 
 
 ----------------------------------------------------------------------------------------------------
-
+require( GetScriptDirectory().."/locations2" )
 function ItemPurchaseThink()
+    -- throwing things in here because this called every frame right?
+    if seconds == 0 and _G.minutes % 2 == 1 or seconds == 30 and _G.minutes == 0 then  --function this
+        for k,v in pairs(NEUTRAL_CAMPS) do
+            v.is_alive = true
+        end
+	end
+	local sNextItem = tableItemsToBuy[1];
+	local npcBot = GetBot();
 
 	if ( #tableItemsToBuy == 0 )
 	then
 		npcBot:SetNextItemPurchaseValue( 0 );
 		return;
 	end
-
-	local sNextItem = tableItemsToBuy[1];
-	local npcBot = GetBot();
 
 	npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 
