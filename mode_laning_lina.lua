@@ -5,12 +5,18 @@ _G._savedEnv = getfenv()
 module( "mode_generic_laning", package.seeall )
 
 ----------------------------------------------------------------------------------------------------
-require( GetScriptDirectory().."/hero_funcs" )
+require( GetScriptDirectory().."/hero_funcs/pulling" )
+require( GetScriptDirectory().."/hero_funcs/stacking" )
+require( GetScriptDirectory().."/hero_funcs/zoning" )
+
+require( GetScriptDirectory().."/utility_funcs" )
+require( GetScriptDirectory().."/locations2" )
 function OnStart()
     local state = nil
     chain_pull = nil
     reset_pull_vars()
     _G.state = "pull_easy"
+    --_G.state = "zone_offlaner"
 	--print( "mode_generic_defend_ally.OnStart" );
 end
 
@@ -24,9 +30,6 @@ function OnEnd()
 end
 
 
-require( GetScriptDirectory().."/utility_funcs" )
-require( GetScriptDirectory().."/locations2" )
-
 function Think()
 	local bot = GetBot()
     local name = bot:GetUnitName()
@@ -37,12 +40,15 @@ function Think()
         if _G.state == "none" and NEUTRAL_CAMPS.rad_safe_ez.is_alive then
             _G.state = "pull_easy"
         end
-        if _G.state == "chain_pull_hard" and RAD_SAFE_HARD.is_alive then
+
+        if _G.state == "zone_offlaner" then
+            bot:zone_offlaner()
+        elseif _G.state == "chain_pull_hard" and RAD_SAFE_HARD.is_alive then
             print ("CHAING PULLING")
-            bot:pull_camp(RAD_SAFE_HARD, 59, false, 1);
+            bot:pull_camp(RAD_SAFE_HARD, 59, false, 1)
         elseif _G.state == "pull_easy" then
             --_G.state = "pull_easy"
-            bot:pull_camp(RAD_SAFE_EASY, 44, true, 0);
+            bot:pull_camp(RAD_SAFE_EASY, 44, true, 0)
         end
 
 --    elseif GetGameState() == 4 and _G.movespeed == nil then

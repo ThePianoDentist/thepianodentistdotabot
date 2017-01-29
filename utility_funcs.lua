@@ -8,3 +8,7 @@ end
 function printl()
     print (GetTeamMember(2, 1):GetLocation())
 end
+
+function LocationToLocationSquaredDistance(location_one, location_two)
+    return
+end
