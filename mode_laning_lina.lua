@@ -12,20 +12,22 @@ require( GetScriptDirectory().."/hero_funcs/zoning" )
 require( GetScriptDirectory().."/utility_funcs" )
 require( GetScriptDirectory().."/locations2" )
 function OnStart()
-    local state = nil
-    chain_pull = nil
-    reset_pull_vars()
-    _G.state = "pull_easy"
+    _G.state = {action_queue={current_action}, current_action=nil, current_target=nil, temp_memory={}, current_mode="zone_offlaner"}
+--    chain_pull = nil
+--    reset_pull_vars()
     --_G.state = "zone_offlaner"
 	--print( "mode_generic_defend_ally.OnStart" );
 end
 
 function OnEnd()
-    _G.state = "none"
-    state = nil
-    _G.current_target = nil
-    _G.creeps_aggroed = nil
-    _G.have_pulled = false
+    if _G.state ~= nil then
+        _G.state.current_mode = "none"
+        _G.state.current_target = nil
+        _G.state.temp_memory.creeps_aggroed = nil
+        _G.state.temp_memory.have_pulled = false
+    end
+
+
 	--print( "mode_generic_defend_ally.OnEnd" );
 end
 
@@ -37,16 +39,16 @@ function Think()
     _G.minutes = math.floor(DotaTime() / 60)
     --print (GetTeamMember(2, 1):GetLocation());
     if GetGameState() == 5 then  -- 5 is creeps spawned i.e 0 seconds
-        if _G.state == "none" and NEUTRAL_CAMPS.rad_safe_ez.is_alive then
-            _G.state = "pull_easy"
+        if _G.state.current_mode == "none" and NEUTRAL_CAMPS.rad_safe_ez.is_alive then
+            _G.state.current_mode = "pull_easy"
         end
 
-        if _G.state == "zone_offlaner" then
+        if _G.state.current_mode == "zone_offlaner" then
             bot:zone_offlaner()
-        elseif _G.state == "chain_pull_hard" and RAD_SAFE_HARD.is_alive then
+        elseif _G.state.current_mode == "chain_pull_hard" and RAD_SAFE_HARD.is_alive then
             print ("CHAING PULLING")
             bot:pull_camp(RAD_SAFE_HARD, 59, false, 1)
-        elseif _G.state == "pull_easy" then
+        elseif _G.state.current_mode == "pull_easy" then
             --_G.state = "pull_easy"
             bot:pull_camp(RAD_SAFE_EASY, 44, true, 0)
         end
