@@ -45,9 +45,9 @@ function Think()
     local timing = 45
     local radiant_front = _G.minutes > 0 and GetLaneFrontLocation(TEAM_RADIANT, LANE_BOT, 0) or Vector(5900, -6000, 0)
     -- TODO should I add randomness to this decision?
-    print(NEUTRAL_CAMPS.rad_safe_ez.is_alive)
+    print(_G.state.neutrals.rad_safe_ez.is_alive)
     print(radiant_front.y)
-    if NEUTRAL_CAMPS.rad_safe_ez.is_alive and _G.seconds == (timing - bot:estimate_travel_time(NEUTRAL_CAMPS.rad_safe_ez.location) - 1) and radiant_front.y > -4000 then --TODO check -4000 sensible
+    if _G.state.neutrals.rad_safe_ez.is_alive and _G.seconds == (timing - bot:estimate_travel_time(_G.state.neutrals.rad_safe_ez.location) - 1) and radiant_front.y > -4000 then --TODO check -4000 sensible
         _G.state.current_mode = "pull_easy"
     end
     --print (GetTeamMember(2, 1):GetLocation());
