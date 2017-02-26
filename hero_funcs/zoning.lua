@@ -9,8 +9,8 @@ function CDOTA_Bot_Script:zone_offlaner()
         return
     end
 
-    local enemy_heroes = self:GetNearbyHeroes(2000, true, BOT_MODE_NONE)
-    local radiant_front = _G.minutes > 0 and GetLaneFrontLocation(TEAM_RADIANT, LANE_BOT, 0) or Vector(5900, -6000, 0)
+    local enemy_heroes = self:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
+    local radiant_front = _G.minutes > 0 and GetLaneFrontLocation(TEAM_RADIANT, LANE_BOT, 0) or Vector(5900, -5500, 0)
     local dire_front = GetLaneFrontLocation(2, 3, 0)
     if GetUnitToLocationDistance(self, radiant_front) > 2000 then
         print("Move -> radiant front")
@@ -34,7 +34,8 @@ function CDOTA_Bot_Script:zone_offlaner()
         print("Doing zoning")
 
         if next(enemy_heroes) then
-            print(enemy_heroes[1])
+            print("Enemy hearoes nearby: " .. tostring(enemy_heroes[1]))
+            _G.state.current_target = enemy_heroes[1]
         end
         if _G.state.current_target == nil then
             _G.state.current_target = enemy_heroes[1]
@@ -53,7 +54,8 @@ function CDOTA_Bot_Script:zone_offlaner()
         end
 
         local our_loc = self:GetLocation()
-        local enemy_loc = target:GetLastSeenLocation()
+
+        local enemy_loc = GetHeroLastSeenInfo(target:GetPlayerID()).location -- what if nil, cant be nil right?
         local extra_creeps = AGGRO_RANGE + distance_to_target > 2000 and {} or self:GetNearbyLaneCreeps(AGGRO_RANGE + distance_to_target, true)
         print("enemy_loc.x: " .. tostring(enemy_loc.x))
         print("our_loc.x: " .. tostring(our_loc.x))

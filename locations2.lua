@@ -45,8 +45,6 @@ NEUTRAL_CAMPS = {rad_mid_med=RAD_MID_MEDIUM, rad_mid_hard=RAD_MID_HARD, rad_mid_
     dire_safe_easy=DIRE_SAFE_EASY, dire_safe_hard=DIRE_SAFE_HARD, dire_off_anc=DIRE_OFF_ANCIENT, dire_off_med=DIRE_OFF_MEDIUM, dire_off_hard=DIRE_OFF_HARD
 }
 
-_G.state.neutrals = NEUTRAL_CAMPS
-
 ------------------------------
 -- Shrine and Bounty locations
 ------------------------------

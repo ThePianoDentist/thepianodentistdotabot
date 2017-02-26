@@ -1,5 +1,5 @@
-function get_seconds()
-    local time_int = math.floor(DotaTime()) --will this round up as well. i only want rounding down I believe?
+function get_seconds(time)
+    local time_int = math.floor(time) --will this round up as well. i only want rounding down I believe?
     local result = time_int % 60;
     return result
 end
