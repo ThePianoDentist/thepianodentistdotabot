@@ -16,7 +16,7 @@ function OnStart()
     _G.test = "test"
     print(_G.test)
     --TODO replace current_mode with current_laning_mode
-    _G.state = {action_queue={current_action}, current_action=nil, current_target=nil, temp_memory={}, current_mode="pull_easy" }
+    _G.state = {action_queue={current_action}, current_action=nil, current_target=nil, temp_memory={}, current_mode="pull_easy", pull_status="init"}
     _G.state.neutrals = NEUTRAL_CAMPS -- this really should be outside onstart. should be gloabl...er
 end
 
