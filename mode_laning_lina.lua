@@ -11,6 +11,8 @@ require( GetScriptDirectory().."/hero_funcs/zoning" )
 
 require( GetScriptDirectory().."/utility_funcs" )
 require( GetScriptDirectory().."/locations2" )
+--require(GetScriptDirectory().."storageapi/json")
+--require(GetScriptDirectory().."storageapi/storage")
 function OnStart()
     print("DOING START")
     _G.test = "test"
@@ -57,6 +59,12 @@ function Think()
     if game_state == 4 then
         bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1))
     elseif game_state == 5 then  -- 5 is creeps spawned i.e 0 seconds
+        local data = "test"
+--        Storage:Put( 1, data, function( resultTable, successBool )
+--            if successBool then
+--                print("Successfully put data in storage")
+--            end
+--        end)
         if _G.state.neutrals.rad_safe_ez.is_alive and math.abs(_G.seconds - (timing - get_seconds(bot:estimate_travel_time(_G.state.neutrals.rad_safe_ez.pull_to) - 1))) < 3 and radiant_front.y > -3800 then --TODO check -4000 sensible
             if _G.state.current_mode ~= "pull_easy" then
                 _G.state.current_target = nil
