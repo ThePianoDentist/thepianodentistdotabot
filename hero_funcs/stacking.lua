@@ -25,6 +25,11 @@ function CDOTA_Bot_Script:find_nearest_camp()
 end
 
 function CDOTA_Bot_Script:stack_camp(camp)
+    if _G.seconds == 0 then -- the stack will have happened. or the opportunity has passed
+        _G.state.current_target = nil
+        _G.state.current_mode = "none"
+    end
+
     if _G.seconds < camp.stack_t then
         if self:GetLocation() ~= camp.pull_from then
             self:Action_MoveToLocation(camp.location)

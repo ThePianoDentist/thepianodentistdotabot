@@ -9,6 +9,17 @@ function CDOTA_Bot_Script:zone_offlaner()
         return
     end
 
+    print("GetUnitToLocationDistance(self, GetTower(TEAM_DIRE, TOWER_BOT_1):GetLocation()): " .. tostring(GetUnitToLocationDistance(self, GetTower(TEAM_DIRE, TOWER_BOT_1):GetLocation())) .. "/n")
+    -- this distance just seems a bit...off?
+    if GetUnitToLocationDistance(self, GetTower(TEAM_DIRE, TOWER_BOT_1):GetLocation()) < 900 then -- 700 is attack range
+        print("Getting out of enemy tower range")
+        self:Action_MoveToUnit(GetTower(TEAM_RADIANT, TOWER_BOT_1))
+        _G.state.current_mode = "none"
+        _G.state.current_target = nil
+        return
+    end
+
+
     local enemy_heroes = self:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
     local radiant_front = _G.minutes > 0 and GetLaneFrontLocation(TEAM_RADIANT, LANE_BOT, 0) or Vector(5900, -5500, 0)
     local dire_front = GetLaneFrontLocation(2, 3, 0)
@@ -20,7 +31,8 @@ function CDOTA_Bot_Script:zone_offlaner()
     elseif next(enemy_heroes) == nil then -- may need to account for heroes fogging us so still being close by
         if _G.state.current_target ~= nil then
             print("Quit")
-            _G.state.current_state = nil
+            _G.state.current_target = nil
+            _G.state.current_mode = "none"
             return
         else
             print("Move -> radiant front")
