@@ -25,7 +25,6 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num)
     -- even after aggroing, if theyre fogged it reports velocity as 0 and max health as -1. Nice! :D
     if not _G.state.temp_memory.creeps_aggroed then
         -- The only time our 'action' goes over the minute, is in a chain pull. if we've told it to chain pull, then dont need to check time
-        print("timing - self:estimate_travel_time(camp.location): " .. tostring(timing - self:estimate_travel_time(camp.location)))
         if (_G.seconds > timing - self:estimate_travel_time(camp.location) or pull_num == 1) then
             self:aggro_camp(camp)
         else
@@ -35,7 +34,6 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num)
         -- do the double pull
         -- replace with time to pull and creep health to always work
         if should_chain and self:time_to_chain_pull(camp) == true and camp.is_alive then
-            print ("Doing chain pull")
             reset_pull_vars()
             _G.state.neutrals.rad_safe_ez.is_alive = false -- TODO this isnt being updated properly
             if _G.state.neutrals.rad_safe_hard.is_alive then
@@ -61,7 +59,6 @@ function CDOTA_Bot_Script:get_target(camp)
         local neuts = self:GetNearbyNeutralCreeps(1000)
         for k, v in pairs(neuts) do
             if (v:GetHealth() > 0) and GetUnitToLocationDistance(v, camp.location) < 300 and string.match(v:GetUnitName(), "neutral") then
-                print ("Got new target")
                 return v
             end
         end
@@ -78,12 +75,9 @@ function CDOTA_Bot_Script:aggro_camp(camp)
 
     if _G.state.current_target  ~= nil and _G.state.current_target:IsAlive() == true
     then
-        print(GetHeroLastSeenInfo(_G.state.current_target:GetPlayerID()).location)
         self:Action_AttackUnit(_G.state.current_target, true)
-        print ("Attack Unit")
         if self:haveWeAggroedPull() then
             _G.state.temp_memory.creeps_aggroed = true
-            print ("Have Aggored the creeps")
         end
     else
         self:Action_MoveToLocation(camp.location)
@@ -95,23 +89,18 @@ function CDOTA_Bot_Script:farm_camp(camp)
 
     -- erm what is 220 for. why did I do that?
     if _G.state.current_target == nil or (not next(self:GetNearbyLaneCreeps(1000, false)) and _G.state.current_target:GetHealth() < 220) then --either pull failed or all our creeps are dead
-        print ("Cannot complete pull")
-        print ("Either all friendly creeps died. Or current_target got set to nil")
         _G.state.temp_memory.creeps_aggroed = nil
         _G.state.temp_memory.have_pulled = false
         _G.state.current_mode = "none"
         return
     end
-    print ("_G.state.current_target:IsAlive: " .. tostring(_G.state.current_target:IsAlive()))
     if _G.state.current_target:GetHealth() == 0 or _G.state.current_target:IsAlive() == false then -- check IsAlive
-        print ("_G.state.current_target = self:get_target(camp)")
         _G.state.current_target = self:get_target(camp)
     end
 
     if _G.state.current_target ~= nil then
         self:Action_AttackUnit(_G.state.current_target, true)
     else -- camp is dead. go do some other stuff
-        print ("camp dead")
         camp.is_alive = false
         _G.state.temp_memory.creeps_aggroed = nil
         _G.state.temp_memory.have_pulled = false

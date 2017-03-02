@@ -12,3 +12,7 @@ end
 function LocationToLocationSquaredDistance(location_one, location_two)
     return
 end
+
+function logJson(encodedData)
+    return "JSON_OUT:" .. encodedData
+end

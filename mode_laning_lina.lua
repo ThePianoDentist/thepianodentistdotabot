@@ -11,14 +11,15 @@ require( GetScriptDirectory().."/hero_funcs/zoning" )
 
 require( GetScriptDirectory().."/utility_funcs" )
 require( GetScriptDirectory().."/locations2" )
---require(GetScriptDirectory().."storageapi/json")
---require(GetScriptDirectory().."storageapi/storage")
+require(GetScriptDirectory().."/storageapi/json")
+--require(GetScriptDirectory().."/storageapi/storage")
+--curl=assert(loadlib(GetScriptDirectory().."[lib]luacurl[.so|.dll]", "luaopen_luacurl"))()
+--local http_request = require "http.request"
+--local io = require("io")
+--require "io"
 function OnStart()
-    print("DOING START")
-    _G.test = "test"
-    print(_G.test)
     --TODO replace current_mode with current_laning_mode
-    _G.state = {action_queue={current_action}, current_action=nil, current_target=nil, temp_memory={}, current_mode="zone_offlaner" }
+    _G.state = {action_queue={}, current_action=nil, current_target=nil, temp_memory={}, current_mode="pull_easy" }
     _G.state.neutrals = NEUTRAL_CAMPS -- this really should be outside onstart. should be gloabl...er
 end
 
@@ -36,7 +37,7 @@ end
 
 
 function Think()
-
+    --local headers, stream = assert(http_request.new_from_uri("http://example.com"):go())
     if _G.state.current_mode == "none" then
         _G.state.current_mode = "zone_offlaner" -- kind of default mode
     end
@@ -49,17 +50,11 @@ function Think()
     local minutes = _G.minutes
     local timing = 45
     local radiant_front = minutes > 0 and GetLaneFrontLocation(TEAM_RADIANT, LANE_BOT, 0) or Vector(5900, -6000, 0)
-    -- TODO should I add randomness to this decision?
-    print("radiant_front.y: " .. radiant_front.y)
-    print("_G.state.neutrals.rad_safe_ez.is_alive: " .. tostring(_G.state.neutrals.rad_safe_ez.is_alive))
-    print("(timing - bot:estimate_travel_time(_G.state.neutrals.rad_safe_ez.location) - 1): " .. tostring(timing - get_seconds(bot:estimate_travel_time(_G.state.neutrals.rad_safe_ez.location)) - 1))
-    print("WHAT THE FUCK:  " .. tostring(_G.state.neutrals.rad_safe_ez.is_alive and _G.seconds == (timing - get_seconds(bot:estimate_travel_time(_G.state.neutrals.rad_safe_ez.pull_to) - 2)) and radiant_front.y > -3800))
-    print("radiant_front.y > -3800: " .. tostring(radiant_front.y > -3800))
 
     if game_state == 4 then
         bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1))
     elseif game_state == 5 then  -- 5 is creeps spawned i.e 0 seconds
-        local data = "test"
+--        local data = "test"
 --        Storage:Put( 1, data, function( resultTable, successBool )
 --            if successBool then
 --                print("Successfully put data in storage")
@@ -71,11 +66,11 @@ function Think()
                 _G.state.current_mode = "pull_easy"
             end
         end
-        -- should take into account attack range of person
-        if minutes >= 2 and minutes % 2 == 0 and math.abs(_G.seconds - (_G.state.neutrals.rad_safe_med.stack_t - get_seconds(bot:estimate_travel_time(_G.state.neutrals.rad_safe_med.location) - 2))) < 2 then
-            print("Stacking radiant medium camp")
-            _G.state.current_mode = "stack_dire_safe_med"
-        end
+--        -- should take into account attack range of person
+--        if minutes >= 2 and minutes % 2 == 0 and math.abs(_G.seconds - (_G.state.neutrals.rad_safe_med.stack_t - get_seconds(bot:estimate_travel_time(_G.state.neutrals.rad_safe_med.location) - 2))) < 2 then
+--            print("Stacking radiant medium camp")
+--            _G.state.current_mode = "stack_dire_safe_med"
+--        end
 
         if _G.state.current_mode == "zone_offlaner" then
             bot:zone_offlaner()
