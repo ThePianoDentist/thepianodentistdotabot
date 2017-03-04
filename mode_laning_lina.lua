@@ -12,7 +12,7 @@ require( GetScriptDirectory().."/hero_funcs/zoning" )
 require( GetScriptDirectory().."/utility_funcs" )
 require( GetScriptDirectory().."/locations2" )
 require(GetScriptDirectory().."/storageapi/json")
---require(GetScriptDirectory().."/storageapi/storage")
+require(GetScriptDirectory().."/storageapi/storage")
 --curl=assert(loadlib(GetScriptDirectory().."[lib]luacurl[.so|.dll]", "luaopen_luacurl"))()
 --local http_request = require "http.request"
 --local io = require("io")
@@ -21,6 +21,16 @@ function OnStart()
     --TODO replace current_mode with current_laning_mode
     _G.state = {action_queue={}, current_action=nil, current_target=nil, temp_memory={}, current_mode="pull_easy" }
     _G.state.neutrals = NEUTRAL_CAMPS -- this really should be outside onstart. should be gloabl...er
+    _G.double_timing = 57
+    local a = {cat=57 }
+    local req = CreateLocalhostHTTPRequest(':8080/')
+    req:Send()
+--    Storage:Put(a, function( resultTable, successBool )
+--        if successBool then
+--            print("Successfully put data in storage")
+--        end
+--    end)
+    print("JSN:" .. tostring(JSON:encode(_G.double_timing)))
 end
 
 function OnEnd()
@@ -38,9 +48,9 @@ end
 
 function Think()
     --local headers, stream = assert(http_request.new_from_uri("http://example.com"):go())
-    if _G.state.current_mode == "none" then
-        _G.state.current_mode = "zone_offlaner" -- kind of default mode
-    end
+--    if _G.state.current_mode == "none" then
+--        _G.state.current_mode = "zone_offlaner" -- kind of default mode
+--    end
 
     local bot = GetBot()
     local name = bot:GetUnitName()
@@ -75,7 +85,6 @@ function Think()
         if _G.state.current_mode == "zone_offlaner" then
             bot:zone_offlaner()
         elseif _G.state.current_mode == "chain_pull_hard" and RAD_SAFE_HARD.is_alive then
-            print ("CHAING PULLING")
             bot:pull_camp(RAD_SAFE_HARD, 59, false, 1)
         elseif _G.state.current_mode == "pull_easy" then
             --_G.state = "pull_easy"

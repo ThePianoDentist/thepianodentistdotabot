@@ -1,7 +1,7 @@
 require(GetScriptDirectory().."/storageapi/json")
 require(GetScriptDirectory().."/storageapi/class")
 
-STORAGEAPI_API_URL = "http://localhost:6543/api/v1/storage"
+STORAGEAPI_API_URL = ":9200/doublepull/run/?"--/api/v1/storage"
 
 --[[
 	Storage API interface to store data for Dota 2 Custom Game players.
@@ -63,8 +63,6 @@ if Storage == nil then
 	_G.Storage = class({})
 end
 
-local storeCache = {}
-
 --[[
 	Storage:Put
 	Used for putting stuff inside of the storage
@@ -77,10 +75,7 @@ local storeCache = {}
 	@param 	data 	table 	The data you want stored
 	@param 	callback handle	The function that should run when the storage is put
 ]]
-function Storage:Put(steam_id, data, callback)
-
-	-- Invalidate cache since we're setting new data
-	self:Invalidate(steam_id)
+function Storage:Put(data, callback)
 
 	if not pcall(function()
 		data = JSON:encode(data)
@@ -91,9 +86,8 @@ function Storage:Put(steam_id, data, callback)
 
 
 	-- Send the request
-	self:SendHTTPRequest("POST",
+	self:SendHTTPRequest(
 		{
-			steam_id = tostring(steam_id),
 			data = data
 		},
 
@@ -135,46 +129,40 @@ end
 	@param  steam_id int    The steamID you want to access the storage for
 	@param 	callback handle	The function that should run when the storage is retrieved
 ]]
-function Storage:Get(steam_id, callback)
-
-	-- Check if we have a valid cache and return it if we do
-	if storeCache[steam_id] ~= nil then
-		callback(storeCache[steam_id], true)
-		return
-	end
-
-	-- Send the request
-	self:SendHTTPRequest("GET",
-		{
-			steam_id = tostring(steam_id)
-		},
-
-		function(result)
-			-- Decode response into lua table
-
-			local resultTable = {}
-			if not pcall(function()
-				resultTable = JSON:decode(result)
-			end) then
-				Warning("[dota2.tools.Storage] Can't decode result: " .. result)
-			end
-
-
-			-- If we get an error response, successBool should be false
-			if resultTable ~= nil and resultTable["errors"] ~= nil then
-				storeCache[steam_id] = resultTable["errors"]
-				callback(storeCache[steam_id], false)
-				return
-			end
-
-			if resultTable ~= nil and resultTable["data"] ~= nil and resultTable["data"]["data"] ~= nil then
-				storeCache[steam_id] = resultTable["data"]["data"]
-			end
-			-- If we get a success response, successBool should be true
-			callback(storeCache[steam_id], true)
-		end
-	)
-end
+--function Storage:Get(steam_id, callback)
+--
+--	-- Send the request
+--	self:SendHTTPRequest("GET",
+--		{
+--			steam_id = tostring(steam_id)
+--		},
+--
+--		function(result)
+--			-- Decode response into lua table
+--
+--			local resultTable = {}
+--			if not pcall(function()
+--				resultTable = JSON:decode(result)
+--			end) then
+--				Warning("[dota2.tools.Storage] Can't decode result: " .. result)
+--			end
+--
+--
+--			-- If we get an error response, successBool should be false
+--			if resultTable ~= nil and resultTable["errors"] ~= nil then
+--				storeCache[steam_id] = resultTable["errors"]
+--				callback(storeCache[steam_id], false)
+--				return
+--			end
+--
+--			if resultTable ~= nil and resultTable["data"] ~= nil and resultTable["data"]["data"] ~= nil then
+--				storeCache[steam_id] = resultTable["data"]["data"]
+--			end
+--			-- If we get a success response, successBool should be true
+--			callback(storeCache[steam_id], true)
+--		end
+--	)
+--end
 
 --function Storage:SetApiKey(key)
 --	-- Set the api key
@@ -187,19 +175,11 @@ end
 
 	@param  steam_id int    The steamID we invalidate the cache for
 ]]
-function Storage:Invalidate(steam_id)
-	-- Set cache for steam_id to nil
-	storeCache[steam_id] = nil
-end
 
 --[[
 	Storage:InvalidateAll
 	Invalidates all cache
 ]]
-function Storage:InvalidateAll()
-	-- Set cache to nil
-	storeCache = {}
-end
 
 --[[
 	Storage:SendHTTPRequest
@@ -208,3 +188,12 @@ end
 	@param values 	table 	Table with query parameters we want to send
 	@param callback handle 	Callback we call for the response
 ]]
+
+function Storage:SendHTTPRequest(values, callback)
+	CreateHTTPRequest(':8000')--/doublepull/run/?\'{"hero": "lion","damage_spread_lane": 1}\'')
+	print("done request")
+	--local req = CreateHTTPRequest(STORAGEAPI_API_URL):Send
+--	req:Send(function(result)
+--		callback(result.Body)
+--	end)
+end
