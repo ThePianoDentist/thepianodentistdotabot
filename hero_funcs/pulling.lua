@@ -1,6 +1,7 @@
 local next = next -- makes things quicker apparently :|
 require( GetScriptDirectory().."/locations2" )
 require( GetScriptDirectory().."/hero_funcs/generic" )
+require( GetScriptDirectory().."/utility_funcs" )
 
 function Set (list)
     local set = {}
@@ -19,15 +20,19 @@ end
 --ML parameters
 -------------------
 local params = {}
-params["damage_spread_neutral"] = -0.161610971193 --dynamic
-params["damage_spread_lane"] = 0.370439000794 --dynamic
 params["p_hero_attack_range"] = 0 --dynamic
-params["hero_attackspeed"] = 0.440648986884 --dynamic
-params["hero_attackdamage"] = -0.395334854736 --dynamic
-params["hero_movespeed"] = -0.165955990595 --dynamic
-params["p_targeted_neutral_eff_hp"] = 0 --dynamic
-params["p_targeted_lane_eff_hp"] = 0 --dynamic
+params["p_hero_attackspeed"] = 0.440648986884 --dynamic
+params["p_hero_attackdamage"] = -0.395334854736 --dynamic
+params["p_hero_movespeed"] = -0.165955990595 --dynamic
+
+params["p_damage_spread_neutral"] = -0.161610971193 --dynamic
 params["p_neutral_total_eff_hp"] = 0 --dynamic
+params["p_targeted_neutral_eff_hp"] = 0 --dynamic
+params["p_fraction_neutral_left"] = 0 --dynamic
+
+params["p_damage_spread_lane"] = 0.370439000794 --dynamic
+params["p_fraction_lane_left"] = 0 --dynamic
+params["p_targeted_lane_eff_hp"] = 0 --dynamic
 params["p_lane_total_eff_hp"] = 0 --dynamic
 
 --local p_damage_spread_lane = 0 --dynamic
@@ -49,6 +54,95 @@ function CDOTA_Bot_Script:time_to_chain_pull_ML(params, values)
 
 end
 
+function CDOTA_Bot_Script:get_chain_pull_vals(total_neutral_count)
+    local values = {}
+
+    values["hero_attack_range"] = self:GetAttackRange()
+    values["hero_attackspeed"] = self:GetAttackSpeed()
+    values["hero_attackdamage"] = self:GetAttackDamage()
+    values["hero_movespeed"] = self:GetCurrentMovementSpeed()
+
+    values["damage_spread_neutral"] = 0 --dynamic
+    values["neutral_total_eff_hp"] = 0 --dynamic
+    values["targeted_neutral_eff_hp"] = 0 --dynamic
+    values["fraction_neutral_left"] = 0 --dynamic
+
+    values["damage_spread_lane"] = 0 --dynamic
+    values["fraction_lane_left"] = 0 --dynamic
+    values["targeted_lane_eff_hp"] = 0 --dynamic
+    values["lane_total_eff_hp"] = 0 --dynamic
+--    local hero_data = {
+--        name=self:GetUnitName(),
+--        range = self:GetAttackRange(),
+--        attackspeed = self:GetAttackSpeed(),
+--        attackdamage = self:GetAttackDamage(),
+--        movespeed = self:GetCurrentMovementSpeed()
+--    }
+    local targeted_lane_creeps = {}
+    local max_targets_lane = 0
+    for i,v in ipairs(self:GetNearbyNeutralCreeps(1000)) do
+        if v:WasRecentlyDamagedByCreep(2.0) then
+            print("HAHAHA")
+            values["damage_spread_neutral"] = values["damage_spread_neutral"] + 1
+        end
+        values["neutral_total_eff_hp"] = values["neutral_total_eff_hp"] + effective_hp(v:GetHealth(), v:GetArmor())
+        values["fraction_neutral_left"] =  values["fraction_neutral_left"] + (1 / total_neutral_count)
+        local target = v:GetAttackTarget()
+        if target ~= nil then
+            print(target)
+            for k,v in pairs(target) do
+                print(k)
+                print(v)
+            end
+
+            if targeted_lane_creeps[target] ~= nil then
+                local num_targets = targeted_lane_creeps[target] + 1
+                if num_targets > max_targets_lane then
+                    max_targets_lane = num_targets
+                    values["targeted_lane_eff_hp"] = effective_hp(target:GetHealth(), target:GetArmor())
+                end
+                targeted_lane_creeps[target] = num_targets + 1
+            else
+                targeted_lane_creeps[target] = 1
+            end
+        end
+
+    end
+
+    local targeted_neutral_creeps = {}
+    local max_targets_neutral = 0
+    --TODO do I need to check isAlive stuff?
+    for i,v in ipairs(self:GetNearbyLaneCreeps(1000, false)) do
+        if v:WasRecentlyDamagedByCreep(2.0) then
+            print("HAHAHA")
+            values["damage_spread_lane"] = values["damage_spread_lane"] + 1
+        end
+        values["lane_total_eff_hp"] = values["lane_total_eff_hp"] + effective_hp(v:GetHealth(), v:GetArmor())
+        values["fraction_lane_left"] =  values["fraction_lane_left"] + 0.2
+        local target = v:GetAttackTarget()
+        if target ~= nil then
+            print(target)
+            for k,v in pairs(target) do
+                print(k)
+                print(v)
+            end
+            if targeted_neutral_creeps[target] ~= nil then
+                local num_targets = targeted_lane_creeps[target] + 1
+                if num_targets > max_targets_neutral then
+                    values["targeted_lane_eff_hp"] = effective_hp(target:GetHealth(), target:GetArmor())
+                    max_targets_neutral = num_targets
+                end
+                targeted_neutral_creeps[target] = targeted_neutral_creeps[target] + 1
+            else
+                targeted_neutral_creeps[target] = 1
+            end
+        end
+
+    end
+
+    return values
+end
+
 
 --function CDOTA_Bot_Script:time_to_chain_pull_ML(damage_spread_neutral, damage_spread_lane, hero_attack_range,
 --    hero_attackspeed, hero_attackdamage, hero_movespeed, targeted_neutral_eff_hp, targeted_lane_eff_hp,
@@ -64,7 +158,6 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num, double
 --    if pull_num == 0 and chain_pull ~= nil then
 --        return self:pull_camp(RAD_SAFE_HARD, 59, false, 1);
 --    end
-
     -- someone damaging the camp without pulling might break this?
     if not camp.is_alive then
         reset_pull_vars()
@@ -85,10 +178,6 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num, double
         -- do the double pull
         -- replace with time to pull and creep health to always work
         if should_chain and self:time_to_chain_pull_basic(double_timing) == true and camp.is_alive then
-
-            local values = {}
-            values["damage_spread_neutral"] = 0
-            values["damage_spread_lane"] = 0
 --            values["hero_attack_range"] = 0
 --            values["hero_attackspeed"] = 0
 --            values["hero_attackdamage"] = 0
@@ -97,50 +186,15 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num, double
 --            values["targeted_lane_eff_hp"] = 0
 --            values["neutral_total_eff_hp"] = 0
 --            values["lane_total_eff_hp"] = 0
-
-
-            local hero_data = {
-                name=self:GetUnitName(),
-                range = self:GetAttackRange(),
-                attackspeed = self:GetAttackSpeed(),
-                attackdamage = self:GetAttackDamage(),
-                movespeed = self:GetCurrentMovementSpeed()
-            }
-
-            local neutral_creeps = {}
-            for i,v in ipairs(self:GetNearbyNeutralCreeps(1000, false)) do
-                --                for k,v in pairs(targets) do
-                --                    if k ~= v:GetAttackTarget() do
-                if v:WasRecentlyDamagedByCreep() then
-                    values["damage_spread_neutral"] = values["damage_spread_neutral"] + 1
-                end
-
-                local neutral = {
-                    health=v:GetHealth(),
-                    armour=v:GetArmor(),
-                }
-                neutral_creeps[#neutral_creeps+1] = neutral
-            end
-
-            local lane_creeps = {}
-            local targets = {}
-            for i,v in ipairs(self:GetNearbyLaneCreeps(1000, false)) do
---                for k,v in pairs(targets) do
---                    if k ~= v:GetAttackTarget() do
-                if v:WasRecentlyDamagedByCreep() then --does this work for neutrals?
-                    values["damage_spread_lane"] = values["damage_spread_lane"] + 1
-                end
-                local lane_creep = {
-                    health=v:GetHealth(),
-                    armour=v:GetArmor(),
-                }
-                lane_creeps[#lane_creeps+1] = lane_creep
-            end
-
+            local total_neutral_count = 4 -- TODO set this
+            local values = self:get_chain_pull_vals(total_neutral_count)
             local data = {type="parameter_values", values=values}
---            local data = {type="parameters", hero_data=hero_data, lane_creeps=lane_creeps, neutral_creeps=neutral_creeps,
---                damage_spread_lane=damage_spread_lane, damage_spread_neutral=damage_spread_neutral}
+            --            local data = {type="parameters", hero_data=hero_data, lane_creeps=lane_creeps, neutral_creeps=neutral_creeps,
+            --                damage_spread_lane=damage_spread_lane, damage_spread_neutral=damage_spread_neutral}
             print("JSN:" .. tostring(JSON:encode(data)))
+--            local req = CreateHTTPRequest(":9200/doublepull/run?" ..tostring(JSON:encode(data)))
+--            req:Send()
+
             reset_pull_vars()
             _G.state.neutrals.rad_safe_ez.is_alive = false -- TODO this isnt being updated properly
             if _G.state.neutrals.rad_safe_hard.is_alive then
@@ -179,7 +233,6 @@ function CDOTA_Bot_Script:aggro_camp(camp)
     if _G.state.current_target == nil then
         _G.state.current_target = self:get_target(camp)
     end
-
     if _G.state.current_target  ~= nil and _G.state.current_target:IsAlive() == true
     then
         self:Action_AttackUnit(_G.state.current_target, true)

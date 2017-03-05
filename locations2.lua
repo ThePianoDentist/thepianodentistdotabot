@@ -9,11 +9,11 @@ RAD_MID_HARD = {location=Vector(-554.121765, -3323.541992, 256.000000), stack_t=
 
 RAD_MID_ANCIENT = {location=Vector(680.126160, -2741.720215, 384.000000), stack_t=70, pull_t=70, is_alive=false}
 
-RAD_SAFE_EASY = {location=Vector(3022.693848, -4553.411621, 256.000000), pull_to=Vector(3650, -6250 , 0), stack_t=70, pull_t=70, is_alive=false, no_creeps=0 }
+RAD_SAFE_EASY = {location=Vector(3022.693848, -4553.411621, 256.000000), pull_to=Vector(3650, -6250 , 0), stack_t=70, pull_t=70, is_alive=true, no_creeps=0 }
 
 RAD_SAFE_MEDIUM = {location=Vector(547.355835, -4626.182129, 384.000000), pull_to=RAD_SAFE_EASY.location, stack_t=53, pull_t=53, is_alive=true}
 
-RAD_SAFE_HARD = {location=Vector(4756.009277, -4438.848145, 256.000000), pull_to=RAD_SAFE_EASY.location, stack_t=70, pull_t=70, is_alive=false, no_creeps=0}
+RAD_SAFE_HARD = {location=Vector(4756.009277, -4438.848145, 256.000000), pull_to=RAD_SAFE_EASY.location, stack_t=70, pull_t=70, is_alive=true, no_creeps=0}
 
 RAD_OFF_ANCIENT = {location=Vector(-2969.868164, -100.282837, 384.000000), stack_t=70, pull_t=70, is_alive=false}
 

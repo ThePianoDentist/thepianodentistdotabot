@@ -21,16 +21,12 @@ function OnStart()
     --TODO replace current_mode with current_laning_mode
     _G.state = {action_queue={}, current_action=nil, current_target=nil, temp_memory={}, current_mode="pull_easy" }
     _G.state.neutrals = NEUTRAL_CAMPS -- this really should be outside onstart. should be gloabl...er
-    _G.double_timing = 57
-    local a = {cat=57 }
-    local req = CreateLocalhostHTTPRequest(':8080/')
-    req:Send()
 --    Storage:Put(a, function( resultTable, successBool )
 --        if successBool then
 --            print("Successfully put data in storage")
 --        end
 --    end)
-    print("JSN:" .. tostring(JSON:encode(_G.double_timing)))
+    --print("JSN:" .. tostring(JSON:encode(_G.double_timing)))
 end
 
 function OnEnd()
@@ -88,7 +84,7 @@ function Think()
             bot:pull_camp(RAD_SAFE_HARD, 59, false, 1)
         elseif _G.state.current_mode == "pull_easy" then
             --_G.state = "pull_easy"
-            bot:pull_camp(RAD_SAFE_EASY, 44, true, 0)
+            bot:pull_camp(RAD_SAFE_EASY, 44, true, 0, 55)
         elseif _G.state.current_mode == "stack_dire_safe_med" then
             bot:stack_camp(_G.state.neutrals.rad_safe_med)
         end
