@@ -19,7 +19,7 @@ require(GetScriptDirectory().."/storageapi/storage")
 --require "io"
 function OnStart()
     --TODO replace current_mode with current_laning_mode
-    _G.state = {action_queue={}, current_action=nil, current_target=nil, temp_memory={}, current_mode="pull_easy" }
+    _G.state = {action_queue={}, current_action=nil, current_target=nil, success=nil, temp_memory={}, current_mode="pull_easy" }
     _G.state.neutrals = NEUTRAL_CAMPS -- this really should be outside onstart. should be gloabl...er
 --    Storage:Put(a, function( resultTable, successBool )
 --        if successBool then
@@ -84,7 +84,7 @@ function Think()
             bot:pull_camp(RAD_SAFE_HARD, 59, false, 1)
         elseif _G.state.current_mode == "pull_easy" then
             --_G.state = "pull_easy"
-            bot:pull_camp(RAD_SAFE_EASY, 44, true, 0, 55)
+            bot:pull_camp(RAD_SAFE_EASY, 43, true, 0, 56)
         elseif _G.state.current_mode == "stack_dire_safe_med" then
             bot:stack_camp(_G.state.neutrals.rad_safe_med)
         end
