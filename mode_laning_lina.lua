@@ -84,7 +84,7 @@ function Think()
             bot:pull_camp(RAD_SAFE_HARD, 59, false, 1)
         elseif _G.state.current_mode == "pull_easy" then
             --_G.state = "pull_easy"
-            bot:pull_camp(RAD_SAFE_EASY, 43, true, 0, 56)
+            bot:pull_camp(RAD_SAFE_EASY, 43, true, 0, 58)
         elseif _G.state.current_mode == "stack_dire_safe_med" then
             bot:stack_camp(_G.state.neutrals.rad_safe_med)
         end

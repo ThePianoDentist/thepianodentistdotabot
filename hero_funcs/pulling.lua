@@ -55,6 +55,8 @@ function CDOTA_Bot_Script:time_to_chain_pull_ML(params, values)
 end
 
 function CDOTA_Bot_Script:get_chain_pull_vals(total_neutral_count)
+    --dota_neutral_spawn_interval
+    --dota_neutral_initial_spawn_delay
     local values = {}
 
     values["hero_attack_range"] = self:GetAttackRange()
@@ -82,24 +84,25 @@ function CDOTA_Bot_Script:get_chain_pull_vals(total_neutral_count)
     local max_targets_lane = 0
     for i,v in ipairs(self:GetNearbyNeutralCreeps(1200)) do
         print("Ith neutral: " .. tostring(i))
-        if v:WasRecentlyDamagedByCreep(2000.) then
+        if v:TimeSinceDamagedByCreep() < 1.5 then
             print("HAHAHA")
             values["damage_spread_neutral"] = values["damage_spread_neutral"] + 1
         end
         values["neutral_total_eff_hp"] = values["neutral_total_eff_hp"] + effective_hp(v:GetHealth(), v:GetArmor())
         values["fraction_neutral_left"] =  values["fraction_neutral_left"] + (1 / total_neutral_count)
-        local target = v:GetAttackTarget()
+        local target = v:GetTarget()
         if target ~= nil then
             print("v:GetAttackTarget() neutral")
             print(target:GetUnitName())
+            local userdata
             for k,v in pairs(target) do
                 print(k)
                 print(v)
-                local userdata = v
+                userdata = v
             end
             local new_target = true
             for i,v in ipairs(targeted_lane_creeps) do
-                if v.userdata ~= userdata then
+                if v.userdata == userdata then
                     new_target = false
                     local num_targets = v.count + 1
                     if num_targets > max_targets_lane then
@@ -111,7 +114,8 @@ function CDOTA_Bot_Script:get_chain_pull_vals(total_neutral_count)
             end
 
             if new_target then
-                targeted_lane_creeps[#targeted_lane_creeps+1] = {userdata=v, count=1}
+                --targeted_lane_creeps[#targeted_lane_creeps+1] = {userdata=v, count=1 }
+                values["damage_spread_lane"] = values["damage_spread_lane"] + 1
             end
         end
 
@@ -122,7 +126,7 @@ function CDOTA_Bot_Script:get_chain_pull_vals(total_neutral_count)
     --TODO do I need to check isAlive stuff?
     for i,v in ipairs(self:GetNearbyLaneCreeps(1200, false)) do
         print("Ith lane creep: " .. tostring(i))
-        if v:WasRecentlyDamagedByCreep(2000.) then
+        if v:TimeSinceDamagedByCreep() < 1.5 then
             print("HAHAHA")
             values["damage_spread_lane"] = values["damage_spread_lane"] + 1
         end
@@ -140,9 +144,13 @@ function CDOTA_Bot_Script:get_chain_pull_vals(total_neutral_count)
             end
             local new_target = true
             for i,v in ipairs(targeted_neutral_creeps) do
-                if v.userdata ~= userdata then
+                print("v.userdata: " .. tostring(v.userdata))
+                print("userdata: " .. tostring(userdata) .. "\n")
+                if v.userdata == userdata then
+                    print("new target false")
                     new_target = false
                     local num_targets = v.count + 1
+                    print("num targets " .. tostring(v.count + 1))
                     if num_targets > max_targets_neutral then
                         max_targets_neutral = num_targets
                         values["targeted_neutral_eff_hp"] = effective_hp(target:GetHealth(), target:GetArmor())
@@ -152,6 +160,8 @@ function CDOTA_Bot_Script:get_chain_pull_vals(total_neutral_count)
             end
 
             if new_target then
+                print("Adding new target")
+                --values["damage_spread_neutral"] = values["damage_spread_neutral"] + 1
                 targeted_neutral_creeps[#targeted_neutral_creeps+1] = {userdata=v, count=1}
             end
         end
