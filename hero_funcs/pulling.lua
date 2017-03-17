@@ -2,6 +2,7 @@ local next = next -- makes things quicker apparently :|
 require( GetScriptDirectory().."/locations2" )
 require( GetScriptDirectory().."/hero_funcs/generic" )
 require( GetScriptDirectory().."/utility_funcs" )
+require( GetScriptDirectory().."/neural_net" )
 
 function Set (list)
     local set = {}
@@ -21,20 +22,20 @@ end
 --ML parameters
 -------------------
 local params = {}
-params["p_hero_attackrange"] = -98.5357324448 --dynamic
-params["p_hero_attackspeed"] = -0.170246347935 --dynamic
-params["p_hero_attackdamage"] = -7.49743232042 --dynamic
-params["p_hero_movespeed"] = -43.3832889123 --dynamic
+params["p_hero_attackrange"] = -0.999771250365 --dynamic
+params["p_hero_attackspeed"] = 0.440648986884 --dynamic
+params["p_hero_attackdamage"] = -0.395334854736 --dynamic
+params["p_hero_movespeed"] = -0.165955990595 --dynamic
 
-params["p_damage_spread_neutral"] = -0.143773182753 --dynamic
-params["p_neutral_total_eff_hp"] = 0.0033 --dynamic
-params["p_targeted_neutral_eff_hp"] = 0.0033 --dynamic
-params["p_fraction_neutral_left"] = 0.0033 --dynamic
+params["p_damage_spread_neutral"] = -0.161610971193 --dynamic
+params["p_neutral_total_eff_hp"] = -0.815322810462 --dynamic
+params["p_targeted_neutral_eff_hp"] = -0.627479577245 --dynamic
+params["p_fraction_neutral_left"] = -0.706488218366 --dynamic
 
-params["p_damage_spread_lane"] = 0.0033 --dynamic
-params["p_fraction_lane_left"] = -0.0555292731014 --dynamic
-params["p_targeted_lane_eff_hp"] = 0.0033 --dynamic
-params["p_lane_total_eff_hp"] = -104.930474431 --dynamic
+params["p_damage_spread_lane"] = 0.370439000794 --dynamic
+params["p_fraction_lane_left"] = -0.308878545914 --dynamic
+params["p_targeted_lane_eff_hp"] = 0.0776334680067 --dynamic
+params["p_lane_total_eff_hp"] = -0.206465051539 --dynamic
 
 
 function CDOTA_Bot_Script:send_results()
@@ -141,7 +142,7 @@ function CDOTA_Bot_Script:time_to_chain_pull_ML(params, values)
         --print(k .. ": " .. tostring(values[k:gsub("^p_(.-)$", "%1")]) .. "\n")
         result = result + (v  * values[k:gsub("^p_(.-)$", "%1")])
     end
-    --print("RESULT: " .. tostring(result))
+    print("RESULT: " .. tostring(result))
     if result > 10 then return true else return false end
 end
 
