@@ -17,27 +17,6 @@ function reset_pull_vars()
     return
 end
 
-
----------------------
---ML parameters
--------------------
-local params = {}
-params["p_hero_attackrange"] = -0.999771250365 --dynamic
-params["p_hero_attackspeed"] = 0.440648986884 --dynamic
-params["p_hero_attackdamage"] = -0.395334854736 --dynamic
-params["p_hero_movespeed"] = -0.165955990595 --dynamic
-
-params["p_damage_spread_neutral"] = -0.161610971193 --dynamic
-params["p_neutral_total_eff_hp"] = -0.815322810462 --dynamic
-params["p_targeted_neutral_eff_hp"] = -0.627479577245 --dynamic
-params["p_fraction_neutral_left"] = -0.706488218366 --dynamic
-
-params["p_damage_spread_lane"] = 0.370439000794 --dynamic
-params["p_fraction_lane_left"] = -0.308878545914 --dynamic
-params["p_targeted_lane_eff_hp"] = 0.0776334680067 --dynamic
-params["p_lane_total_eff_hp"] = -0.206465051539 --dynamic
-
-
 function CDOTA_Bot_Script:send_results()
     _G.final_values.success = self:check_chain_pull_success()
     --print("Success: " .. tostring(_G.final_values.success))
@@ -57,7 +36,6 @@ function CDOTA_Bot_Script:send_results()
     local req = CreateHTTPRequest(request_str)
     --print("req: " .. tostring(req))
     --req:Send()
-    GetTeamMember(1):ActionImmediate_PurchaseItem("item_tpscroll") --this is an indicator to reload game/map
     --DebugPause()
     _G.results_sent = true
 end
@@ -105,7 +83,7 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num, double
             _G.final_values.success = nil
         end
 
-        if should_chain and self:time_to_chain_pull_ML(params, values) and camp.is_alive then
+        if should_chain and self:time_to_chain_pull_ML(values) and camp.is_alive then
     --        print("JSN:" .. tostring(JSON:encode(data)))
             --if should_chain and self:time_to_chain_pull_basic(59) and camp.is_alive then
             reset_pull_vars()
@@ -135,15 +113,28 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num, double
     end
 end
 
-function CDOTA_Bot_Script:time_to_chain_pull_ML(params, values)
+function CDOTA_Bot_Script:time_to_chain_pull_ML(values)
     local result = 0
-    --TODO assuming ordered correctly seems an unncessary hassle
-    for k, v in pairs(params) do
-        --print(k .. ": " .. tostring(values[k:gsub("^p_(.-)$", "%1")]) .. "\n")
-        result = result + (v  * values[k:gsub("^p_(.-)$", "%1")])
+    local net_out = neural_net(values)
+    print("NEURAL NET prediction: " .. tostring(net_out))
+    if run < 50 then
+        return DotaTime() > _G.random_time
+    elseif run < 100 then return net_out > 0.6  -- make this dynamic. the more its learnt the higher the threshold?
+    elseif run < 150 then return net_out > 0.7
+    elseif run < 200 then return net_out > 0.8
+    elseif run < 250 then return net_out > 0.9
+    elseif run < 300 then return net_out > 0.95
+    elseif run < 400 then return net_out > 0.98
+    else return net_out > 0.99
     end
-    print("RESULT: " .. tostring(result))
-    if result > 10 then return true else return false end
+--    print("NEURAL NET: " .. tostring(net_out))
+--    --TODO assuming ordered correctly seems an unncessary hassle
+--    for k, v in pairs(params) do
+--        --print(k .. ": " .. tostring(values[k:gsub("^p_(.-)$", "%1")]) .. "\n")
+--        result = result + (v  * values[k:gsub("^p_(.-)$", "%1")])
+--    end
+--    print("RESULT: " .. tostring(result))
+--    if result > 10 then return true else return false end
 end
 
 function CDOTA_Bot_Script:get_chain_pull_vals(total_neutral_count)

@@ -19,6 +19,7 @@ require(GetScriptDirectory().."/storageapi/storage")
 --require "io"
 function OnStart()
     --TODO replace current_mode with current_laning_mode
+    _G.random_time = RandomInt(51, 60)
     _G.state = {action_queue={}, current_action=nil, current_target=nil, success=nil, temp_memory={}, current_mode="pull_easy" }
     _G.state.neutrals = NEUTRAL_CAMPS -- this really should be outside onstart. should be gloabl...er
 --    Storage:Put(a, function( resultTable, successBool )
