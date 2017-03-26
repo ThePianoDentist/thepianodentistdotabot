@@ -101,12 +101,13 @@ function CDOTA_Bot_Script:pull_camp(camp, timing, should_chain, pull_num, double
             self:Action_MoveToLocation(camp.pull_to)
         else
             _G.state.temp_memory.have_pulled = true
-            if pull_num == 1 and self:GetNearbyLaneCreeps(1000, false) then -- we double pulled soooo early that we never even finished single pull
-                _G.final_values.success = self:check_chain_pull_success()
-                if _G.results_sent == nil then
-                    self:send_results()
-                end
-            end
+--            if pull_num == 1 and self:GetNearbyLaneCreeps(1000, false) then -- we double pulled soooo early that we never even finished single pull
+--                if _G.results_sent == nil then
+--                    print("This is the early check/send results")
+--                    _G.final_values.success = self:check_chain_pull_success()
+--                    self:send_results()
+--                end
+--            end
             self:farm_camp(camp, pull_num)
 
         end
@@ -116,17 +117,18 @@ end
 function CDOTA_Bot_Script:time_to_chain_pull_ML(values)
     local result = 0
     local net_out = neural_net(values)
-    print("NEURAL NET prediction: " .. tostring(net_out))
-    if run < 50 then
-        return DotaTime() > _G.random_time
-    elseif run < 100 then return net_out > 0.6  -- make this dynamic. the more its learnt the higher the threshold?
-    elseif run < 150 then return net_out > 0.7
-    elseif run < 200 then return net_out > 0.8
-    elseif run < 250 then return net_out > 0.9
-    elseif run < 300 then return net_out > 0.95
-    elseif run < 400 then return net_out > 0.98
-    else return net_out > 0.99
+    local do_chain
+    if run < 400 then
+        do_chain = DotaTime() > _G.random_time
+    elseif run < 500 then do_chain = net_out > 0.7
+    elseif run < 600 then do_chain = net_out > 0.8
+    elseif run < 700 then do_chain = net_out > 0.9
+    elseif run < 800 then do_chain = net_out > 0.95
+    elseif run < 900 then do_chain = net_out > 0.98
+    else do_chain = net_out > 0.99
     end
+    if do_chain then print("NEURAL NET prediction: " .. tostring(net_out)) end
+    return do_chain
 --    print("NEURAL NET: " .. tostring(net_out))
 --    --TODO assuming ordered correctly seems an unncessary hassle
 --    for k, v in pairs(params) do
@@ -256,17 +258,22 @@ function CDOTA_Bot_Script:check_chain_pull_success()
     local creeps_left = 0
     local creeps_pulled = 0
     local success = false  -- if there are no nearby creeps then the pull will have failed
-    for i,v in ipairs(self:GetNearbyLaneCreeps(1000, false)) do
+    for i,v in ipairs(self:GetNearbyLaneCreeps(800, false)) do
         if i == 1 then success = true end  -- check if we have 1 nearby creep. if yes temporarily set success true
         --print("ith ..: " .. tostring(i))
         if v:GetLocation().y < -5150 then success = false else -- if creeps this far down then the chain pull missed them
             creeps_pulled = creeps_pulled + 1
         end
-        --print("Creeps pulled: " .. tostring(creeps_pulled))
     end
     for _, v in ipairs(self:GetNearbyNeutralCreeps(1000)) do -- if they are still farming small camp we have failed
-        if v:GetLocation().x < self:GetLocation().x then success = false; break end
+        if v:GetLocation().x < self:GetLocation().x then
+            print(v:GetLocation().x)
+            print(self:GetLocation().x)
+            success = false
+            creeps_pulled = creeps_pulled - 1
+        end
     end
+    print("Creeps pulled: " .. tostring(creeps_pulled))
     return success
 end
 
@@ -307,10 +314,16 @@ function CDOTA_Bot_Script:farm_camp(camp, pull_num)
 --    end
 
     -- erm what is 220 for. why did I do that?
-    if _G.state.current_target == nil or (not next(self:GetNearbyLaneCreeps(1000, false)) and _G.state.current_target:GetHealth() < 220) then --either pull failed or all our creeps are dead
+    if _G.state.current_target == nil or not next(self:GetNearbyLaneCreeps(1000, false)) then-- and _G.state.current_target:GetHealth() < 220) then --either pull failed or all our creeps are dead
+        print("ALL FrIENDLY CREPS DEAD> RUN AWAY!")
         _G.state.temp_memory.creeps_aggroed = nil
         _G.state.temp_memory.have_pulled = false
         _G.state.current_mode = "none"
+        if _G.results_sent == nil then
+            _G.final_values.success = false
+            self:send_results()
+        end
+
         return
     end
     if _G.state.current_target:GetHealth() == 0 or _G.state.current_target:IsAlive() == false then -- check IsAlive

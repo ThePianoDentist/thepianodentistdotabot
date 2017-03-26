@@ -19,7 +19,7 @@ require(GetScriptDirectory().."/storageapi/storage")
 --require "io"
 function OnStart()
     --TODO replace current_mode with current_laning_mode
-    _G.random_time = RandomInt(51, 60)
+    _G.random_time = RandomInt(57, 70)
     _G.state = {action_queue={}, current_action=nil, current_target=nil, success=nil, temp_memory={}, current_mode="pull_easy" }
     _G.state.neutrals = NEUTRAL_CAMPS -- this really should be outside onstart. should be gloabl...er
 --    Storage:Put(a, function( resultTable, successBool )
@@ -45,9 +45,9 @@ end
 
 function Think()
     --local headers, stream = assert(http_request.new_from_uri("http://example.com"):go())
-    if _G.state.current_mode == "none" then
-        _G.state.current_mode = "pull_easy" -- kind of default mode
-    end
+--    if _G.state.current_mode == "none" then
+--        _G.state.current_mode = "pull_easy" -- kind of default mode
+--    end
 
     local bot = GetBot()
     local name = bot:GetUnitName()
@@ -85,7 +85,7 @@ function Think()
             bot:pull_camp(RAD_SAFE_HARD, 59, false, 1)
         elseif _G.state.current_mode == "pull_easy" then
             --_G.state = "pull_easy"
-            bot:pull_camp(RAD_SAFE_EASY, 42.5, true, 0, 58)
+            bot:pull_camp(RAD_SAFE_EASY, 42.1, true, 0, 58)
         elseif _G.state.current_mode == "stack_dire_safe_med" then
             bot:stack_camp(_G.state.neutrals.rad_safe_med)
         end
